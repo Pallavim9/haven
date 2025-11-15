@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import DarkModeToggle from "./DarkModeToggle";
+import HavenLogo from "./HavenLogo";
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -14,7 +15,10 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
       {/* Navigation */}
       <nav className="container mx-auto px-6 py-6">
         <div className="flex items-center justify-between">
-          <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">Haven</div>
+          <div className="flex items-center gap-3">
+            <HavenLogo size="sm" showAnimation={false} />
+            <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">Haven</div>
+          </div>
           <div className="flex items-center gap-4">
             <Link
               href="#features"
@@ -59,7 +63,6 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             Swipe through verified apartments, find roommates, and discover your next home.
-            Built for students, by students.
           </motion.p>
 
           <motion.div
@@ -140,7 +143,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
       {/* Footer */}
       <footer className="border-t border-gray-200 dark:border-gray-700 mt-20 py-8">
         <div className="container mx-auto px-6 text-center text-gray-600 dark:text-gray-400">
-          <p>&copy; 2024 Haven. Built for students, by students.</p>
+          <p>&copy; 2024 Haven.</p>
         </div>
       </footer>
     </div>

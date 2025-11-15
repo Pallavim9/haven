@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Haven — Apartment Swiping App",
-  description: "Find your perfect apartment by swiping through verified listings. Built for students, by students.",
+  description: "Find your perfect apartment by swiping through verified listings.",
 };
 
 export default function RootLayout({

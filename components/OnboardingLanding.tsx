@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import DarkModeToggle from "./DarkModeToggle";
+import HavenLogo from "./HavenLogo";
 
 interface OnboardingLandingProps {
   onSignUp: () => void;
@@ -16,7 +17,7 @@ export default function OnboardingLanding({ onSignUp, onLogIn, onBack }: Onboard
       <div className="absolute top-6 right-6">
         <DarkModeToggle />
       </div>
-      
+
       {/* Back Button */}
       {onBack && (
         <button
@@ -36,35 +37,7 @@ export default function OnboardingLanding({ onSignUp, onLogIn, onBack }: Onboard
         transition={{ duration: 0.5 }}
         className="mb-8"
       >
-        <div className="relative">
-          {/* Speech bubble / Location pin shape */}
-          <div className="w-24 h-24 bg-indigo-400 rounded-full flex items-center justify-center relative">
-            {/* House icon */}
-            <svg
-              className="w-12 h-12 text-white"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-            </svg>
-            {/* Location pin overlay */}
-            <div className="absolute -top-1 -right-1 w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center">
-              <svg
-                className="w-3 h-3 text-white"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            {/* Ping effect dots */}
-            <div className="absolute inset-0 rounded-full border-2 border-indigo-400 animate-ping opacity-75"></div>
-          </div>
-        </div>
+        <HavenLogo size="md" showAnimation={true} />
       </motion.div>
 
       {/* App Name */}
