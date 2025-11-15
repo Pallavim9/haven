@@ -2,22 +2,68 @@
 
 import { useState } from "react";
 import LandingPage from "@/components/LandingPage";
+import OnboardingLanding from "@/components/OnboardingLanding";
+import AddressInput from "@/components/AddressInput";
+import CommutePreference from "@/components/CommutePreference";
 import CardStack from "@/components/CardStack";
 import LikedListings from "@/components/LikedListings";
 import DarkModeToggle from "@/components/DarkModeToggle";
 import { fakeListings, ApartmentListing } from "@/lib/data";
 
-type View = "landing" | "swipe" | "liked";
+type View = "marketing" | "onboarding" | "address" | "commute" | "swipe" | "liked";
+type CommuteOption = "car" | "public-transit" | "walk" | "bike";
 
 export default function Home() {
-  const [view, setView] = useState<View>("landing");
+  const [view, setView] = useState<View>("marketing");
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [hasCompletedAll, setHasCompletedAll] = useState(false);
+  
+  // Onboarding state
+  const [userAddress, setUserAddress] = useState<string>("");
+  const [commuteOptions, setCommuteOptions] = useState<CommuteOption[]>([]);
 
   const likedListings = fakeListings.filter((listing) => likedIds.has(listing.id));
 
-  if (view === "landing") {
-    return <LandingPage onGetStarted={() => setView("swipe")} />;
+  // Marketing landing page
+  if (view === "marketing") {
+    return <LandingPage onGetStarted={() => setView("onboarding")} />;
+  }
+
+  // Onboarding landing (Sign Up/Log in)
+  if (view === "onboarding") {
+    return (
+      <OnboardingLanding
+        onSignUp={() => setView("address")}
+        onLogIn={() => setView("address")}
+        onBack={() => setView("marketing")}
+      />
+    );
+  }
+
+  // Address input
+  if (view === "address") {
+    return (
+      <AddressInput
+        onNext={(address) => {
+          setUserAddress(address);
+          setView("commute");
+        }}
+        onBack={() => setView("onboarding")}
+      />
+    );
+  }
+
+  // Commute preference
+  if (view === "commute") {
+    return (
+      <CommutePreference
+        onNext={(options) => {
+          setCommuteOptions(options);
+          setView("swipe");
+        }}
+        onBack={() => setView("address")}
+      />
+    );
   }
 
   const handleRemoveLike = (listingId: string) => {
@@ -57,7 +103,7 @@ export default function Home() {
               </button>
             )}
             <button
-              onClick={() => setView("landing")}
+              onClick={() => setView("marketing")}
               className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
             >
               Back to Home
