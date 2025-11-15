@@ -97,13 +97,13 @@ export default function CardStack({ listings, onLikedChange, initialLikedIds = n
     }
   };
 
-  // Reset trigger after animation completes
+  // Reset trigger after a short delay to allow animation to start
   useEffect(() => {
     if (triggerSwipe) {
       const timer = setTimeout(() => {
         setTriggerSwipe(null);
         setTriggeredListingId(null);
-      }, 600);
+      }, 300);
       return () => clearTimeout(timer);
     }
   }, [triggerSwipe]);
@@ -189,7 +189,7 @@ export default function CardStack({ listings, onLikedChange, initialLikedIds = n
   return (
     <div className="relative w-full h-[700px]">
       {/* Card Stack */}
-      <div className="relative w-full max-w-md mx-auto h-full">
+      <div className="relative w-full max-w-md mx-auto h-full overflow-hidden">
         {/* Action Buttons on Sides - Positioned outside card but not too far */}
         <button
           onClick={handlePass}
@@ -232,7 +232,7 @@ export default function CardStack({ listings, onLikedChange, initialLikedIds = n
         {listings
           .slice(currentIndex, currentIndex + 3)
           .map((listing, i) => {
-            const shouldTrigger = triggerSwipe && listing.id === triggeredListingId;
+            const isTriggeredCard = triggerSwipe && listing.id === triggeredListingId;
             return (
               <SwipeableCard
                 key={listing.id}
@@ -240,7 +240,8 @@ export default function CardStack({ listings, onLikedChange, initialLikedIds = n
                 onSwipe={handleSwipe}
                 index={i}
                 total={Math.min(3, listings.length - currentIndex)}
-                triggerSwipe={shouldTrigger ? triggerSwipe : null}
+                triggerSwipe={isTriggeredCard ? triggerSwipe : null}
+                isTriggeredCard={isTriggeredCard}
               />
             );
           })}

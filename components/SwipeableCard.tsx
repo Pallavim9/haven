@@ -11,6 +11,7 @@ interface SwipeableCardProps {
   index: number;
   total: number;
   triggerSwipe?: "left" | "right" | null;
+  isTriggeredCard?: boolean;
 }
 
 export default function SwipeableCard({
@@ -19,9 +20,11 @@ export default function SwipeableCard({
   index,
   total,
   triggerSwipe,
+  isTriggeredCard = false,
 }: SwipeableCardProps) {
   const [imageIndex, setImageIndex] = useState(0);
   const [exitX, setExitX] = useState(0);
+  const [hasTriggered, setHasTriggered] = useState(false);
 
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-25, 25]);
@@ -33,21 +36,29 @@ export default function SwipeableCard({
 
   // Trigger swipe animation when triggerSwipe prop changes
   useEffect(() => {
-    if (triggerSwipe && index === 0) {
+    if (triggerSwipe && isTriggeredCard && !hasTriggered && exitX === 0) {
       const direction = triggerSwipe === "right" ? 200 : -200;
+      setHasTriggered(true);
       setExitX(direction);
       // Animate the x motion value smoothly
-      const animation = animate(x, direction, {
+      animate(x, direction, {
         type: "spring",
         stiffness: 300,
         damping: 30,
       });
-      // Call onSwipe after animation completes
-      animation.then(() => {
-        onSwipe(triggerSwipe);
-      });
+      // Call onSwipe immediately so state updates right away
+      onSwipe(triggerSwipe);
     }
-  }, [triggerSwipe, index, onSwipe, x]);
+  }, [triggerSwipe, isTriggeredCard, onSwipe, x, exitX, hasTriggered]);
+
+  // Reset hasTriggered when card changes
+  useEffect(() => {
+    if (index !== 0) {
+      setHasTriggered(false);
+      setExitX(0);
+      x.set(0);
+    }
+  }, [index, x]);
 
   const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     if (Math.abs(info.offset.x) > 100) {
@@ -66,14 +77,21 @@ export default function SwipeableCard({
 
   if (index >= total) return null;
 
+  // Scale and offset for cards behind the top card
+  const scale = index === 0 ? 1 : 0.95;
+  const yOffset = index === 0 ? 0 : 8;
+
   return (
     <motion.div
-      className="absolute inset-0 flex items-center justify-center"
+      className="absolute inset-0 flex items-center justify-center pointer-events-none"
       style={{
         x,
+        y: yOffset,
         rotate,
         opacity,
+        scale,
         zIndex: total - index,
+        pointerEvents: index === 0 ? "auto" : "none",
       }}
       drag="x"
       dragConstraints={{ left: 0, right: 0 }}
