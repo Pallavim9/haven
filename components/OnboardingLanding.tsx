@@ -1,8 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useState } from "react";
 import DarkModeToggle from "./DarkModeToggle";
 import HavenLogo from "./HavenLogo";
+import { useUser } from "@/contexts/UserContext";
 
 interface OnboardingLandingProps {
   onSignUp: () => void;
@@ -11,6 +13,47 @@ interface OnboardingLandingProps {
 }
 
 export default function OnboardingLanding({ onSignUp, onLogIn, onBack }: OnboardingLandingProps) {
+  const { signUp, logIn, isLoggedIn } = useUser();
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  // If already logged in, proceed to next step
+  if (isLoggedIn) {
+    onSignUp();
+    return null;
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (isSignUp) {
+      if (!email || !username || !password) {
+        setError("Please fill in all fields");
+        return;
+      }
+      const success = signUp(email, username, password);
+      if (success) {
+        onSignUp();
+      } else {
+        setError("An account with this email or username already exists. Please log in instead.");
+      }
+    } else {
+      if (!username || !password) {
+        setError("Please fill in all fields");
+        return;
+      }
+      const success = logIn(username, password);
+      if (success) {
+        onLogIn();
+      } else {
+        setError("Invalid username or password");
+      }
+    }
+  };
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col items-center justify-center px-6 relative">
       {/* Dark Mode Toggle */}
@@ -60,25 +103,67 @@ export default function OnboardingLanding({ onSignUp, onLogIn, onBack }: Onboard
         Search. Connect. Move.
       </motion.p>
 
-      {/* Buttons */}
+      {/* Form */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.4 }}
         className="w-full max-w-sm space-y-4"
       >
-        <button
-          onClick={onSignUp}
-          className="w-full py-4 bg-indigo-600 dark:bg-indigo-400 text-white dark:text-gray-900 rounded-xl font-semibold text-lg hover:bg-indigo-700 dark:hover:bg-indigo-300 transition-colors"
-        >
-          Sign Up
-        </button>
-        <button
-          onClick={onLogIn}
-          className="w-full py-4 bg-indigo-600 dark:bg-indigo-400 text-white dark:text-gray-900 rounded-xl font-semibold text-lg hover:bg-indigo-700 dark:hover:bg-indigo-300 transition-colors"
-        >
-          Log in
-        </button>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {isSignUp && (
+            <div>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email"
+                className="w-full px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                required={isSignUp}
+              />
+            </div>
+          )}
+          <div>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder={isSignUp ? "Username" : "Username or Email"}
+              className="w-full px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              required
+            />
+          </div>
+          <div>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              className="w-full px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              required
+            />
+          </div>
+          {error && (
+            <div className="text-red-500 text-sm text-center">{error}</div>
+          )}
+          <button
+            type="submit"
+            className="w-full py-4 bg-indigo-600 dark:bg-indigo-400 text-white dark:text-gray-900 rounded-xl font-semibold text-lg hover:bg-indigo-700 dark:hover:bg-indigo-300 transition-colors"
+          >
+            {isSignUp ? "Sign Up" : "Log In"}
+          </button>
+        </form>
+        <div className="text-center">
+          <button
+            onClick={() => {
+              setIsSignUp(!isSignUp);
+              setError("");
+            }}
+            className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
+          >
+            {isSignUp ? "Already have an account? Log in" : "Don't have an account? Sign up"}
+          </button>
+        </div>
       </motion.div>
     </div>
   );

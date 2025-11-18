@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import LandingPage from "@/components/LandingPage";
 import OnboardingLanding from "@/components/OnboardingLanding";
 import AddressInput from "@/components/AddressInput";
@@ -8,12 +8,15 @@ import CommutePreference from "@/components/CommutePreference";
 import CardStack from "@/components/CardStack";
 import LikedListings from "@/components/LikedListings";
 import DarkModeToggle from "@/components/DarkModeToggle";
+import HavenLogo from "@/components/HavenLogo";
+import { useUser } from "@/contexts/UserContext";
 import { fakeListings, ApartmentListing } from "@/lib/data";
 
 type View = "marketing" | "onboarding" | "address" | "commute" | "swipe" | "liked";
 type CommuteOption = "car" | "public-transit" | "walk" | "bike";
 
 export default function Home() {
+  const { isLoggedIn, logOut } = useUser();
   const [view, setView] = useState<View>("marketing");
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [hasCompletedAll, setHasCompletedAll] = useState(false);
@@ -21,6 +24,23 @@ export default function Home() {
   // Onboarding state
   const [userAddress, setUserAddress] = useState<string>("");
   const [commuteOptions, setCommuteOptions] = useState<CommuteOption[]>([]);
+
+  // Check if user is logged in on mount
+  useEffect(() => {
+    if (isLoggedIn && view === "marketing") {
+      // User is logged in, skip onboarding if they've completed it before
+      const hasAddress = localStorage.getItem("haven_user_address");
+      const hasCommute = localStorage.getItem("haven_user_commute");
+      
+      if (hasAddress && hasCommute) {
+        setView("swipe");
+      } else if (hasAddress) {
+        setView("commute");
+      } else {
+        setView("address");
+      }
+    }
+  }, [isLoggedIn, view]);
 
   const likedListings = fakeListings.filter((listing) => likedIds.has(listing.id));
 
@@ -33,8 +53,30 @@ export default function Home() {
   if (view === "onboarding") {
     return (
       <OnboardingLanding
-        onSignUp={() => setView("address")}
-        onLogIn={() => setView("address")}
+        onSignUp={() => {
+          // Check if user has already completed onboarding
+          const hasAddress = localStorage.getItem("haven_user_address");
+          const hasCommute = localStorage.getItem("haven_user_commute");
+          if (hasAddress && hasCommute) {
+            setView("swipe");
+          } else if (hasAddress) {
+            setView("commute");
+          } else {
+            setView("address");
+          }
+        }}
+        onLogIn={() => {
+          // Check if user has already completed onboarding
+          const hasAddress = localStorage.getItem("haven_user_address");
+          const hasCommute = localStorage.getItem("haven_user_commute");
+          if (hasAddress && hasCommute) {
+            setView("swipe");
+          } else if (hasAddress) {
+            setView("commute");
+          } else {
+            setView("address");
+          }
+        }}
         onBack={() => setView("marketing")}
       />
     );
@@ -46,6 +88,7 @@ export default function Home() {
       <AddressInput
         onNext={(address) => {
           setUserAddress(address);
+          localStorage.setItem("haven_user_address", address);
           setView("commute");
         }}
         onBack={() => setView("onboarding")}
@@ -59,6 +102,7 @@ export default function Home() {
       <CommutePreference
         onNext={(options) => {
           setCommuteOptions(options);
+          localStorage.setItem("haven_user_commute", JSON.stringify(options));
           setView("swipe");
         }}
         onBack={() => setView("address")}
@@ -88,9 +132,27 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-8">
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">Haven</h1>
+          <div className="flex items-center gap-3">
+            <HavenLogo size="sm" showAnimation={false} />
+            <h1 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">Haven</h1>
+          </div>
           <div className="flex gap-4 items-center">
             <DarkModeToggle />
+            <button
+              onClick={() => {
+                const hasAddress = localStorage.getItem("haven_user_address");
+                const hasCommute = localStorage.getItem("haven_user_commute");
+                if (hasAddress && hasCommute) {
+                  // Go to address page to modify preferences
+                  setView("address");
+                } else {
+                  setView("address");
+                }
+              }}
+              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+            >
+              Preferences
+            </button>
             {likedIds.size > 0 && (
               <button
                 onClick={() => setView("liked")}
@@ -102,6 +164,15 @@ export default function Home() {
                 Liked ({likedIds.size})
               </button>
             )}
+            <button
+              onClick={() => {
+                logOut();
+                setView("marketing");
+              }}
+              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+            >
+              Log Out
+            </button>
             <button
               onClick={() => setView("marketing")}
               className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"

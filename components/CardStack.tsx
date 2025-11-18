@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ApartmentListing } from "@/lib/data";
 import SwipeableCard from "./SwipeableCard";
+import AdOverlay from "./AdOverlay";
+import AdCard from "./AdCard";
 
 interface CardStackProps {
   listings: ApartmentListing[];
@@ -19,6 +21,7 @@ export default function CardStack({ listings, onLikedChange, initialLikedIds = n
   const [likedListings, setLikedListings] = useState<Set<string>>(initialLikedIds);
   const [triggerSwipe, setTriggerSwipe] = useState<"left" | "right" | null>(null);
   const [triggeredListingId, setTriggeredListingId] = useState<string | null>(null);
+  const [swipeCount, setSwipeCount] = useState(0);
 
   // Sync completion state when navigating back
   useEffect(() => {
@@ -55,8 +58,31 @@ export default function CardStack({ listings, onLikedChange, initialLikedIds = n
   }, [currentIndex, listings.length, onCompletedChange, initialCompleted]);
 
   const handleSwipe = (direction: "left" | "right") => {
-    if (currentIndex < listings.length) {
-      const listingId = listings[currentIndex].id;
+    // Calculate total items including ads
+    const totalItems = listings.length + Math.floor(listings.length / 10);
+
+    if (currentIndex < totalItems) {
+      // Check if current item is an ad
+      const items: Array<{ type: "listing" | "ad"; data?: ApartmentListing; adIndex?: number }> = [];
+      let adCount = 0;
+
+      listings.forEach((listing, idx) => {
+        items.push({ type: "listing", data: listing });
+        if ((idx + 1) % 10 === 0 && idx < listings.length - 1) {
+          items.push({ type: "ad", adIndex: adCount++ });
+        }
+      });
+
+      const currentItem = items[currentIndex];
+
+      // If it's an ad, just advance (ads don't support swipe, only skip)
+      if (currentItem?.type === "ad") {
+        return; // Don't handle swipe for ads
+      }
+
+      // Otherwise, handle as normal listing
+      const listingId = currentItem?.data?.id;
+      if (!listingId) return;
       setSwipedListings((prev) => new Set(prev).add(listingId));
 
       if (direction === "right") {
@@ -75,6 +101,7 @@ export default function CardStack({ listings, onLikedChange, initialLikedIds = n
       }
 
       setCurrentIndex((prev) => prev + 1);
+      setSwipeCount((prev) => prev + 1);
 
       // Log swipe action (will be replaced with API call later)
       console.log(`Swiped ${direction} on listing ${listingId}`);
@@ -115,8 +142,29 @@ export default function CardStack({ listings, onLikedChange, initialLikedIds = n
   // Handle arrow key navigation
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Calculate total items including ads
+      const totalItems = listings.length + Math.floor(listings.length / 10);
+
       // Only handle arrow keys when not at the end
-      if (currentIndex >= listings.length) return;
+      if (currentIndex >= totalItems) return;
+
+      // Check if current item is an ad
+      const items: Array<{ type: "listing" | "ad"; data?: ApartmentListing; adIndex?: number }> = [];
+      let adCount = 0;
+
+      listings.forEach((listing, idx) => {
+        items.push({ type: "listing", data: listing });
+        if ((idx + 1) % 10 === 0 && idx < listings.length - 1) {
+          items.push({ type: "ad", adIndex: adCount++ });
+        }
+      });
+
+      const currentItem = items[currentIndex];
+
+      // If it's an ad, don't handle arrow keys
+      if (currentItem?.type === "ad") {
+        return;
+      }
 
       // Prevent default behavior for arrow keys
       if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
@@ -125,15 +173,15 @@ export default function CardStack({ listings, onLikedChange, initialLikedIds = n
 
       if (event.key === "ArrowLeft") {
         // Swipe left (pass)
-        if (currentIndex < listings.length) {
-          const listingId = listings[currentIndex].id;
+        if (currentItem?.data) {
+          const listingId = currentItem.data.id;
           setTriggeredListingId(listingId);
           setTriggerSwipe("left");
         }
       } else if (event.key === "ArrowRight") {
         // Swipe right (like)
-        if (currentIndex < listings.length) {
-          const listingId = listings[currentIndex].id;
+        if (currentItem?.data) {
+          const listingId = currentItem.data.id;
           setTriggeredListingId(listingId);
           setTriggerSwipe("right");
         }
@@ -146,7 +194,10 @@ export default function CardStack({ listings, onLikedChange, initialLikedIds = n
     };
   }, [currentIndex, listings]);
 
-  if (currentIndex >= listings.length) {
+  // Calculate total items including ads
+  const totalItems = listings.length + Math.floor(listings.length / 10);
+
+  if (currentIndex >= totalItems) {
     return (
       <div className="flex flex-col items-center justify-center h-full min-h-[600px] text-center p-8">
         <div className="text-6xl mb-4">🎉</div>
@@ -188,6 +239,8 @@ export default function CardStack({ listings, onLikedChange, initialLikedIds = n
 
   return (
     <div className="relative w-full h-[700px]">
+      {/* Ad Overlay */}
+      <AdOverlay position="bottom-right" />
       {/* Action Buttons on Sides - Positioned outside card container */}
       <button
         onClick={handlePass}
@@ -230,28 +283,57 @@ export default function CardStack({ listings, onLikedChange, initialLikedIds = n
 
       {/* Card Stack */}
       <div className="relative w-full max-w-md mx-auto h-full overflow-hidden">
-        {listings
-          .slice(currentIndex, currentIndex + 3)
-          .map((listing, i) => {
-            const isTriggeredCard = Boolean(triggerSwipe && listing.id === triggeredListingId);
-            return (
-              <SwipeableCard
-                key={listing.id}
-                listing={listing}
-                onSwipe={handleSwipe}
-                index={i}
-                total={Math.min(3, listings.length - currentIndex)}
-                triggerSwipe={isTriggeredCard ? triggerSwipe : null}
-                isTriggeredCard={isTriggeredCard}
-              />
-            );
-          })}
+        {(() => {
+          // Insert ad card after every 10 listings
+          const items: Array<{ type: "listing" | "ad"; data?: ApartmentListing; adIndex?: number }> = [];
+          let adCount = 0;
+
+          listings.forEach((listing, idx) => {
+            items.push({ type: "listing", data: listing });
+            // Insert ad after every 10 listings (starting after the 10th)
+            if ((idx + 1) % 10 === 0 && idx < listings.length - 1) {
+              items.push({ type: "ad", adIndex: adCount++ });
+            }
+          });
+
+          // Filter to show only items from currentIndex onwards
+          const visibleItems = items.slice(currentIndex, currentIndex + 3);
+
+          return visibleItems.map((item, i) => {
+            if (item.type === "ad") {
+              return (
+                <AdCard
+                  key={`ad-${item.adIndex}`}
+                  onSkip={() => {
+                    setCurrentIndex((prev) => prev + 1);
+                  }}
+                  index={i}
+                  total={Math.min(3, items.length - currentIndex)}
+                />
+              );
+            } else if (item.data) {
+              const isTriggeredCard = Boolean(triggerSwipe && item.data.id === triggeredListingId);
+              return (
+                <SwipeableCard
+                  key={item.data.id}
+                  listing={item.data}
+                  onSwipe={handleSwipe}
+                  index={i}
+                  total={Math.min(3, items.length - currentIndex)}
+                  triggerSwipe={isTriggeredCard ? triggerSwipe : null}
+                  isTriggeredCard={isTriggeredCard}
+                />
+              );
+            }
+            return null;
+          });
+        })()}
       </div>
 
       {/* Progress Indicator */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex gap-2">
         <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg text-sm font-medium text-gray-700 dark:text-gray-200">
-          {currentIndex + 1} / {listings.length}
+          {currentIndex + 1} / {totalItems}
         </div>
         {likedListings.size > 0 && (
           <div className="bg-green-500/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg text-sm font-medium text-white flex items-center gap-2">

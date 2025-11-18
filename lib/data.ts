@@ -1,3 +1,11 @@
+export interface Review {
+    id: string;
+    userName: string;
+    rating: number;
+    comment: string;
+    date: string;
+}
+
 export interface ApartmentListing {
     id: string;
     title: string;
@@ -10,6 +18,9 @@ export interface ApartmentListing {
     amenities: string[];
     description: string;
     availableFrom: string;
+    averageRating?: number;
+    totalRatings?: number;
+    reviews?: Review[];
 }
 
 export const fakeListings: ApartmentListing[] = [
