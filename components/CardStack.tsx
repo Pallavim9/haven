@@ -307,7 +307,7 @@ export default function CardStack({ listings, onLikedChange, initialLikedIds = n
   }
 
   return (
-    <div className="relative w-full min-h-[400px] flex flex-col">
+    <div className="relative w-full h-screen flex flex-col">
       {/* Ad Overlay */}
       <AdOverlay position="bottom-right" />
 
