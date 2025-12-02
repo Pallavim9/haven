@@ -14,23 +14,19 @@ export default function LikedListingsPage() {
 
   // Load liked listings from localStorage
   useEffect(() => {
-    // Wait for user to be available
-    if (!user || !isLoggedIn) {
-      setIsLoading(true);
-      return;
-    }
-
-    const storedLikedIds = localStorage.getItem(`haven_liked_listings_${user.username}`);
-    if (storedLikedIds) {
-      try {
-        const parsedIds = JSON.parse(storedLikedIds);
-        setLikedIds(new Set(parsedIds));
-      } catch (error) {
-        console.error("Error parsing liked listings:", error);
+    if (user) {
+      const storedLikedIds = localStorage.getItem(`haven_liked_listings_${user.username}`);
+      if (storedLikedIds) {
+        try {
+          const parsedIds = JSON.parse(storedLikedIds);
+          setLikedIds(new Set(parsedIds));
+        } catch (error) {
+          console.error("Error parsing liked listings:", error);
+        }
       }
+      setIsLoading(false);
     }
-    setIsLoading(false);
-  }, [user, isLoggedIn]);
+  }, [user]);
 
   // Save liked listings to localStorage whenever they change
   useEffect(() => {

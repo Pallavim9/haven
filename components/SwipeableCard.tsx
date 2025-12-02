@@ -86,7 +86,7 @@ export default function SwipeableCard({
 
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-25, 25]);
-  const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0, 1, 1, 1, 0]);
+  const opacity = useTransform(x, [-200, -50, 0, 50, 200], [0, 0.6, 1, 0.6, 0]);
 
   // Swipe direction indicators
   const likeOpacity = useTransform(x, [0, 200], [0, 1]);
