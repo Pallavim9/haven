@@ -95,9 +95,11 @@ export default function SwipeableCard({
   // Trigger swipe animation when triggerSwipe prop changes
   useEffect(() => {
     if (triggerSwipe && isTriggeredCard && !hasTriggered && exitX === 0) {
+      const direction = triggerSwipe === "right" ? 200 : -200;
       setHasTriggered(true);
+      setExitX(direction);
       setPendingSwipe(triggerSwipe);
-      // Call onSwipe with delay to allow fade animation to complete
+      // Call onSwipe with delay to allow slide animation to complete
       setTimeout(() => {
         onSwipe(triggerSwipe);
       }, 300);
@@ -178,7 +180,6 @@ export default function SwipeableCard({
       className="absolute inset-0 flex items-center justify-center pointer-events-none"
       style={{
         x,
-        rotate,
         opacity,
         zIndex: total - index,
         pointerEvents: index === 0 ? "auto" : "none",
@@ -189,16 +190,16 @@ export default function SwipeableCard({
       dragDirectionLock
       onDragEnd={handleDragEnd}
       animate={{
-        x: pendingSwipe ? 0 : exitX,
-        opacity: (exitX !== 0 || pendingSwipe) ? 0 : 1,
+        x: exitX,
+        opacity: exitX !== 0 ? 0 : 1,
         scale: scale,
         y: yOffset,
       }}
-      transition={
-        pendingSwipe
-          ? { type: "tween", duration: 0.3, ease: "easeOut" }
-          : { type: "spring", stiffness: 300, damping: 30 }
-      }
+      transition={{
+        type: "spring",
+        stiffness: pendingSwipe ? 200 : 400,
+        damping: pendingSwipe ? 25 : 35,
+      }}
       onAnimationComplete={() => {
         // Clear pending swipe after animation completes
         if (pendingSwipe) {
