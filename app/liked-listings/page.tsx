@@ -8,25 +8,29 @@ import { fakeListings } from "@/lib/data";
 
 export default function LikedListingsPage() {
   const router = useRouter();
-  const { user } = useUser();
+  const { user, isLoggedIn } = useUser();
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
 
   // Load liked listings from localStorage
   useEffect(() => {
-    if (user) {
-      const storedLikedIds = localStorage.getItem(`haven_liked_listings_${user.username}`);
-      if (storedLikedIds) {
-        try {
-          const parsedIds = JSON.parse(storedLikedIds);
-          setLikedIds(new Set(parsedIds));
-        } catch (error) {
-          console.error("Error parsing liked listings:", error);
-        }
-      }
-      setIsLoading(false);
+    // Wait for user to be available
+    if (!user || !isLoggedIn) {
+      setIsLoading(true);
+      return;
     }
-  }, [user]);
+
+    const storedLikedIds = localStorage.getItem(`haven_liked_listings_${user.username}`);
+    if (storedLikedIds) {
+      try {
+        const parsedIds = JSON.parse(storedLikedIds);
+        setLikedIds(new Set(parsedIds));
+      } catch (error) {
+        console.error("Error parsing liked listings:", error);
+      }
+    }
+    setIsLoading(false);
+  }, [user, isLoggedIn]);
 
   // Save liked listings to localStorage whenever they change
   useEffect(() => {

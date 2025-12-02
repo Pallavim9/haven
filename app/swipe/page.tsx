@@ -48,11 +48,18 @@ export default function SwipePage() {
             showBackToHome={true}
           />
         </div>
-        <CardStack 
-          listings={fakeListings} 
+        <CardStack
+          listings={fakeListings}
           onLikedChange={setLikedIds}
           initialLikedIds={likedIds}
-          onViewLiked={() => router.push("/liked-listings")}
+          onViewLiked={() => {
+            // Ensure localStorage is saved before navigating
+            if (user && likedIds.size > 0) {
+              localStorage.setItem(`haven_liked_listings_${user.username}`, JSON.stringify(Array.from(likedIds)));
+            }
+            // Small delay to ensure localStorage write completes
+            setTimeout(() => router.push("/liked-listings"), 50);
+          }}
           initialCompleted={hasCompletedAll}
           onCompletedChange={setHasCompletedAll}
         />
