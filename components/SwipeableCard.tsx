@@ -99,18 +99,10 @@ export default function SwipeableCard({
       setHasTriggered(true);
       setExitX(direction);
       setPendingSwipe(triggerSwipe);
-      // Animate the x motion value smoothly
-      animate(x, direction, {
-        type: "spring",
-        stiffness: 300,
-        damping: 30,
-      });
-      // Call onSwipe early so state updates happen in parallel with animation
-      // This allows the next card to start scaling up while current card animates out
-      // Small delay ensures animation has started before state updates
+      // Call onSwipe with delay to allow animation to complete
       setTimeout(() => {
         onSwipe(triggerSwipe);
-      }, 50); // Reduced delay for faster state updates
+      }, 300); // Increased delay to allow slower animation to be visible
     }
   }, [triggerSwipe, isTriggeredCard, onSwipe, x, exitX, hasTriggered]);
 
@@ -206,8 +198,8 @@ export default function SwipeableCard({
       }}
       transition={{
         type: "spring",
-        stiffness: 300,
-        damping: 30,
+        stiffness: pendingSwipe ? 100 : 300,
+        damping: pendingSwipe ? 20 : 30,
       }}
       onAnimationComplete={() => {
         // Clear pending swipe after animation completes
