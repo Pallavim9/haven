@@ -20,13 +20,15 @@ export default function OnboardingLanding({ onSignUp, onLogIn, onBack }: Onboard
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [justSignedUp, setJustSignedUp] = useState(false);
 
-  // If already logged in, proceed to login flow (not sign up)
+  // If already logged in when component mounts, proceed to login flow
+  // But NOT if we just signed up (that's handled by the signup button)
   useEffect(() => {
-    if (isLoggedIn) {
+    if (isLoggedIn && !justSignedUp) {
       onLogIn();
     }
-  }, [isLoggedIn, onLogIn]);
+  }, [isLoggedIn, onLogIn, justSignedUp]);
 
   // If already logged in, don't render the form
   if (isLoggedIn) {
@@ -44,6 +46,7 @@ export default function OnboardingLanding({ onSignUp, onLogIn, onBack }: Onboard
       }
       const success = signUp(email, username, password);
       if (success) {
+        setJustSignedUp(true);
         onSignUp();
       } else {
         setError("An account with this email or username already exists. Please log in instead.");

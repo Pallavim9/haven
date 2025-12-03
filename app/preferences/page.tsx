@@ -4,10 +4,14 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AddressInput from "@/components/AddressInput";
 import CommutePreference from "@/components/CommutePreference";
+import { useUser } from "@/contexts/UserContext";
+
+type CommuteOption = "car" | "public-transit" | "walk" | "bike";
 
 function PreferencesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user, updatePreferences, isLoggedIn } = useUser();
   const [step, setStep] = useState<"address" | "commute">("address");
   const [userAddress, setUserAddress] = useState<string>("");
 
@@ -17,19 +21,40 @@ function PreferencesContent() {
     if (stepParam === "commute") {
       setStep("commute");
     }
-    // Load current address from localStorage
-    const currentAddress = typeof window !== 'undefined' ? localStorage.getItem("haven_user_address") || "" : "";
-    setUserAddress(currentAddress);
-  }, [searchParams]);
 
-  const currentAddress = userAddress || (typeof window !== 'undefined' ? localStorage.getItem("haven_user_address") || "" : "");
+    // Load current address from user preferences
+    if (user?.preferences?.address) {
+      setUserAddress(user.preferences.address);
+    }
+  }, [searchParams, user]);
+
+  useEffect(() => {
+    // Redirect to home if not logged in
+    if (!isLoggedIn) {
+      router.push("/");
+    }
+  }, [isLoggedIn, router]);
+
+  // Don't render if not logged in
+  if (!isLoggedIn) {
+    return null;
+  }
+
+  // For new users with no preferences, pass undefined instead of empty values
+  // This prevents the confirmation dialog from showing on first setup
+  const currentAddress = user?.preferences?.address;
+  const currentCommuteOptions = user?.preferences?.commute;
 
   if (step === "address") {
     return (
       <AddressInput
         onNext={(address) => {
           setUserAddress(address);
-          localStorage.setItem("haven_user_address", address);
+          // Update preferences in user context (partially)
+          updatePreferences({
+            ...user?.preferences,
+            address,
+          });
           setStep("commute");
         }}
         onBack={() => router.push("/swipe")}
@@ -38,14 +63,14 @@ function PreferencesContent() {
     );
   }
 
-  const currentCommuteOptions = typeof window !== 'undefined' 
-    ? (localStorage.getItem("haven_user_commute") ? JSON.parse(localStorage.getItem("haven_user_commute")!) : [])
-    : [];
-
   return (
     <CommutePreference
-      onNext={(options) => {
-        localStorage.setItem("haven_user_commute", JSON.stringify(options));
+      onNext={(options: CommuteOption[]) => {
+        // Update preferences in user context (complete)
+        updatePreferences({
+          address: userAddress || currentAddress || "",
+          commute: options,
+        });
         router.push("/swipe");
       }}
       onBack={() => setStep("address")}

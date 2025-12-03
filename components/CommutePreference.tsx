@@ -27,7 +27,8 @@ export default function CommutePreference({ onNext, onBack, initialOptions }: Co
 
   const handleNext = () => {
     if (selectedOptions.length > 0) {
-      if (initialOptions && JSON.stringify(selectedOptions.sort()) !== JSON.stringify(initialOptions.sort())) {
+      // Only show confirmation if user had previous preferences and they changed them
+      if (initialOptions && initialOptions.length > 0 && JSON.stringify(selectedOptions.sort()) !== JSON.stringify(initialOptions.sort())) {
         setNewOptions(selectedOptions);
         setShowConfirm(true);
       } else {
@@ -58,7 +59,7 @@ export default function CommutePreference({ onNext, onBack, initialOptions }: Co
       >
         {/* Header */}
         <h2 className={`${textStyles.headingSmall} text-center mb-4`}>
-          How do you plan to commute?
+          {initialOptions && initialOptions.length > 0 ? "Update your commute preferences" : "How do you plan to commute?"}
         </h2>
         {initialOptions && initialOptions.length > 0 && (
           <p className={`${textStyles.bodyCenter} mb-6`}>

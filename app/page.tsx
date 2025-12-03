@@ -4,8 +4,6 @@ import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import LandingPage from "@/components/LandingPage";
 import OnboardingLanding from "@/components/OnboardingLanding";
-import AddressInput from "@/components/AddressInput";
-import CommutePreference from "@/components/CommutePreference";
 import { useUser } from "@/contexts/UserContext";
 import { useState } from "react";
 
@@ -13,8 +11,7 @@ function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isLoggedIn } = useUser();
-  const [view, setView] = useState<"marketing" | "onboarding" | "address" | "commute">("marketing");
-  const [userAddress, setUserAddress] = useState<string>("");
+  const [view, setView] = useState<"marketing" | "onboarding">("marketing");
   const isExplicitHome = searchParams.get("home") === "true";
 
   // Check if user is logged in on initial mount and redirect to swipe
@@ -46,46 +43,14 @@ function HomeContent() {
     return (
       <OnboardingLanding
         onSignUp={() => {
+          // New users are prompted for preferences
           router.push("/preferences");
         }}
         onLogIn={() => {
-          // On login, just go to swipe - preferences are optional and can be accessed via navbar
+          // Existing users go straight to swipe (preferences already set)
           router.push("/swipe");
         }}
         onBack={() => setView("marketing")}
-      />
-    );
-  }
-
-  // Address input (for onboarding flow)
-  if (view === "address") {
-    const currentAddress = userAddress || (typeof window !== 'undefined' ? localStorage.getItem("haven_user_address") || "" : "");
-    return (
-      <AddressInput
-        onNext={(address) => {
-          setUserAddress(address);
-          localStorage.setItem("haven_user_address", address);
-          setView("commute");
-        }}
-        onBack={() => setView("onboarding")}
-        initialAddress={currentAddress}
-      />
-    );
-  }
-
-  // Commute preference (for onboarding flow)
-  if (view === "commute") {
-    const currentCommuteOptions = typeof window !== 'undefined' 
-      ? (localStorage.getItem("haven_user_commute") ? JSON.parse(localStorage.getItem("haven_user_commute")!) : [])
-      : [];
-    return (
-      <CommutePreference
-        onNext={(options) => {
-          localStorage.setItem("haven_user_commute", JSON.stringify(options));
-          router.push("/swipe");
-        }}
-        onBack={() => setView("address")}
-        initialOptions={currentCommuteOptions}
       />
     );
   }

@@ -2,11 +2,19 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 
+type CommuteOption = "car" | "public-transit" | "walk" | "bike";
+
+interface UserPreferences {
+  address?: string;
+  commute?: CommuteOption[];
+}
+
 interface User {
   email: string;
   username: string;
   password: string;
   name?: string;
+  preferences?: UserPreferences;
 }
 
 interface UserContextType {
@@ -17,6 +25,7 @@ interface UserContextType {
   logOut: () => void;
   hasReviewedListing: (listingId: string) => boolean;
   markListingAsReviewed: (listingId: string) => void;
+  updatePreferences: (preferences: UserPreferences) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -100,6 +109,21 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updatePreferences = (preferences: UserPreferences) => {
+    if (!user) return;
+
+    const updatedUser = { ...user, preferences };
+    setUser(updatedUser);
+
+    // Update in users array
+    const existingUsers = localStorage.getItem("haven_users");
+    const users: User[] = existingUsers ? JSON.parse(existingUsers) : [];
+    const updatedUsers = users.map(u =>
+      u.username === user.username ? updatedUser : u
+    );
+    localStorage.setItem("haven_users", JSON.stringify(updatedUsers));
+  };
+
   return (
     <UserContext.Provider
       value={{
@@ -110,6 +134,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         logOut,
         hasReviewedListing,
         markListingAsReviewed,
+        updatePreferences,
       }}
     >
       {children}
