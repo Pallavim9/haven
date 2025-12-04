@@ -9,6 +9,7 @@ import dynamic from "next/dynamic";
 import { textStyles, buttonStyles, badgeStyles } from "@/lib/styles";
 import HavenLogo from "@/components/HavenLogo";
 import { useUser } from "@/contexts/UserContext";
+import DarkModeToggle from "@/components/DarkModeToggle";
 
 const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
 
@@ -179,6 +180,7 @@ function ListingContent() {
               <h1 className={`${textStyles.heading} text-xl`}>Listing Details</h1>
             </div>
             <div className="flex items-center gap-3">
+              <DarkModeToggle />
               <button
                 onClick={handleShare}
                 className={buttonStyles.secondary}
