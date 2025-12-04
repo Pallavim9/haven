@@ -6,6 +6,7 @@ import { useUser } from "@/contexts/UserContext";
 import { ApartmentListing } from "@/lib/data";
 import { textStyles, inputStyles, buttonStyles } from "@/lib/styles";
 import HavenLogo from "@/components/HavenLogo";
+import DarkModeToggle from "@/components/DarkModeToggle";
 
 export default function AddListingPage() {
   const router = useRouter();
@@ -118,12 +119,15 @@ export default function AddListingPage() {
               <HavenLogo size="sm" showAnimation={false} />
               <h1 className={`${textStyles.heading} text-xl`}>Add New Listing</h1>
             </div>
-            <button
-              onClick={() => router.push("/manager/dashboard")}
-              className={buttonStyles.secondary}
-            >
-              Back to Dashboard
-            </button>
+            <div className="flex items-center gap-3">
+              <DarkModeToggle />
+              <button
+                onClick={() => router.push("/manager/dashboard")}
+                className={buttonStyles.secondary}
+              >
+                Back to Dashboard
+              </button>
+            </div>
           </div>
         </div>
       </div>

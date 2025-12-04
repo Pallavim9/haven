@@ -7,6 +7,7 @@ import { ApartmentListing } from "@/lib/data";
 import { textStyles, buttonStyles } from "@/lib/styles";
 import HavenLogo from "@/components/HavenLogo";
 import ListingTrendsChart from "@/components/ListingTrendsChart";
+import DarkModeToggle from "@/components/DarkModeToggle";
 
 interface ListingMetrics {
   listingId: string;
@@ -145,6 +146,7 @@ export default function ManagerDashboard() {
               <h1 className={`${textStyles.heading} text-xl`}>Manager Dashboard</h1>
             </div>
             <div className="flex items-center gap-3">
+              <DarkModeToggle />
               <span className="text-sm text-gray-600 dark:text-gray-400">
                 {user?.username}
               </span>
