@@ -74,6 +74,7 @@ export const buttonStyles = {
   // Icon button
   icon: "text-indigo-600 dark:text-indigo-300 hover:text-indigo-700 dark:hover:text-indigo-200 transition-colors flex items-center gap-2 cursor-pointer",
   iconClose: "absolute -top-2 -right-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-full p-1 transition-colors cursor-pointer",
+  iconInput: "absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors cursor-pointer",
 
   // Location button
   location: "w-full py-3 px-4 bg-indigo-500 dark:bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-600 dark:hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer",
