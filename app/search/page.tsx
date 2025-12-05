@@ -20,6 +20,12 @@ export default function SearchPage() {
   const [userRating, setUserRating] = useState<number>(0);
   const [userReview, setUserReview] = useState<string>("");
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [priceChanges, setPriceChanges] = useState<Record<string, {
+    type: "increase" | "decrease";
+    daysAgo: number;
+    oldValue: number;
+    newValue: number;
+  }>>({});
 
   // Redirect if not logged in
   useEffect(() => {
@@ -42,6 +48,48 @@ export default function SearchPage() {
     );
     setSearchResults(results);
   }, [searchQuery]);
+
+  // Load recent price changes for search results
+  useEffect(() => {
+    if (searchResults.length === 0) {
+      setPriceChanges({});
+      return;
+    }
+
+    try {
+      const changesData = localStorage.getItem("haven_listing_changes");
+      if (!changesData) return;
+
+      const allChanges = JSON.parse(changesData);
+      const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+      const changes: Record<string, { type: "increase" | "decrease"; daysAgo: number; oldValue: number; newValue: number }> = {};
+
+      searchResults.forEach((listing) => {
+        const priceChanges = allChanges
+          .filter((change: any) =>
+            change.listingId === listing.id &&
+            change.field === "price" &&
+            change.timestamp > sevenDaysAgo
+          )
+          .sort((a: any, b: any) => b.timestamp - a.timestamp);
+
+        if (priceChanges.length > 0) {
+          const latestChange = priceChanges[0];
+          const daysAgo = Math.floor((Date.now() - latestChange.timestamp) / (24 * 60 * 60 * 1000));
+          changes[listing.id] = {
+            type: latestChange.newValue < latestChange.oldValue ? "decrease" : "increase",
+            daysAgo: daysAgo,
+            oldValue: latestChange.oldValue,
+            newValue: latestChange.newValue
+          };
+        }
+      });
+
+      setPriceChanges(changes);
+    } catch (error) {
+      console.error("Error loading price changes:", error);
+    }
+  }, [searchResults]);
 
   // Load reviews when a listing is selected
   useEffect(() => {
@@ -156,9 +204,24 @@ export default function SearchPage() {
                 <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
                   {listing.address}
                 </p>
-                <p className="text-lg font-semibold text-indigo-600 dark:text-indigo-400">
-                  ${listing.price}/mo
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-lg font-semibold text-indigo-600 dark:text-indigo-400">
+                    ${listing.price}/mo
+                  </p>
+                  {priceChanges[listing.id] && (
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                      priceChanges[listing.id].type === "decrease"
+                        ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                        : "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300"
+                    }`}>
+                      {priceChanges[listing.id].type === "decrease" ? "📉 " : "📈 "}
+                      {priceChanges[listing.id].type === "decrease" ? "-" : "+"}
+                      ${Math.abs(priceChanges[listing.id].newValue - priceChanges[listing.id].oldValue).toLocaleString()}
+                      {" • "}
+                      {priceChanges[listing.id].daysAgo === 0 ? "Today" : `${priceChanges[listing.id].daysAgo}d ago`}
+                    </span>
+                  )}
+                </div>
               </div>
             ))}
           </div>

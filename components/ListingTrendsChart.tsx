@@ -281,6 +281,7 @@ export default function ListingTrendsChart({ listingId }: ListingTrendsChartProp
             className="text-xs fill-gray-600 dark:fill-gray-400"
             tick={{ fontSize: 12 }}
             label={{ value: 'Count', angle: -90, position: 'insideLeft', style: { fontSize: 12 } }}
+            allowDecimals={false}
           />
           <YAxis
             yAxisId="right"

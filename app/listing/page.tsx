@@ -23,6 +23,12 @@ function ListingContent() {
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [copied, setCopied] = useState(false);
+  const [recentChanges, setRecentChanges] = useState<Array<{
+    field: string;
+    oldValue: any;
+    newValue: any;
+    timestamp: number;
+  }>>([]);
 
   useEffect(() => {
     if (!listingId) return;
@@ -64,6 +70,24 @@ function ListingContent() {
       const storedReviews = localStorage.getItem(`haven_listing_reviews_${listingId}`);
       if (storedReviews) {
         setReviews(JSON.parse(storedReviews));
+      }
+
+      // Load recent changes (last 30 days)
+      const changesData = localStorage.getItem("haven_listing_changes");
+      if (changesData) {
+        try {
+          const allChanges = JSON.parse(changesData);
+          const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+          const listingChanges = allChanges
+            .filter((change: any) =>
+              change.listingId === listingId &&
+              change.timestamp > thirtyDaysAgo
+            )
+            .sort((a: any, b: any) => b.timestamp - a.timestamp);
+          setRecentChanges(listingChanges);
+        } catch (error) {
+          console.error("Error loading changes:", error);
+        }
       }
 
       // Geocode address
@@ -149,6 +173,32 @@ function ListingContent() {
   const averageRating = reviews.length > 0
     ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
     : listing?.averageRating || 0;
+
+  const formatChangeValue = (field: string, value: any): string => {
+    if (field === "price") return `$${value.toLocaleString()}/mo`;
+    if (field === "bedrooms" || field === "bathrooms") return value.toString();
+    return value.toString();
+  };
+
+  const getChangeMessage = (change: typeof recentChanges[0]): string => {
+    const oldVal = formatChangeValue(change.field, change.oldValue);
+    const newVal = formatChangeValue(change.field, change.newValue);
+    const fieldName = change.field.charAt(0).toUpperCase() + change.field.slice(1);
+    return `${fieldName}: ${oldVal} → ${newVal}`;
+  };
+
+  const getTimeAgo = (timestamp: number): string => {
+    const now = Date.now();
+    const diff = now - timestamp;
+    const days = Math.floor(diff / (24 * 60 * 60 * 1000));
+    const hours = Math.floor(diff / (60 * 60 * 1000));
+    const minutes = Math.floor(diff / (60 * 1000));
+
+    if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
+    if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    return 'Just now';
+  };
 
   if (!listingId || !listing) {
     return (
@@ -256,6 +306,66 @@ function ListingContent() {
                   ${listing.price.toLocaleString()}/mo
                 </span>
               </div>
+
+              {/* Recent Changes */}
+              {recentChanges.length > 0 && (
+                <div className="mb-6">
+                  <div className="space-y-2">
+                    {recentChanges.map((change, index) => {
+                      const isPriceChange = change.field === "price";
+                      const isPriceDecrease = isPriceChange && change.newValue < change.oldValue;
+                      const isPriceIncrease = isPriceChange && change.newValue > change.oldValue;
+                      const priceChangeDiff = isPriceChange ? change.newValue - change.oldValue : 0;
+
+                      return (
+                        <div
+                          key={index}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${
+                            isPriceDecrease
+                              ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800"
+                              : isPriceIncrease
+                              ? "bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800"
+                              : "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
+                          }`}
+                        >
+                          <span className="text-lg">
+                            {isPriceDecrease ? "📉" : isPriceIncrease ? "📈" : "✏️"}
+                          </span>
+                          <div className="flex-1">
+                            <span className={`font-medium ${
+                              isPriceDecrease
+                                ? "text-green-800 dark:text-green-200"
+                                : isPriceIncrease
+                                ? "text-orange-800 dark:text-orange-200"
+                                : "text-blue-800 dark:text-blue-200"
+                            }`}>
+                              {isPriceChange ? (
+                                <>
+                                  Price: {priceChangeDiff > 0 ? '+' : ''}${priceChangeDiff.toLocaleString()}
+                                  <span className="text-xs ml-1">
+                                    ({formatChangeValue("price", change.oldValue)} → {formatChangeValue("price", change.newValue)})
+                                  </span>
+                                </>
+                              ) : (
+                                getChangeMessage(change)
+                              )}
+                            </span>
+                          </div>
+                          <span className={`text-xs ${
+                            isPriceDecrease
+                              ? "text-green-600 dark:text-green-400"
+                              : isPriceIncrease
+                              ? "text-orange-600 dark:text-orange-400"
+                              : "text-blue-600 dark:text-blue-400"
+                          }`}>
+                            {getTimeAgo(change.timestamp)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               <div className="flex flex-wrap gap-4 mb-6">
                 <div className="flex items-center gap-2">

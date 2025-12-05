@@ -71,6 +71,17 @@ export default function CardStack({ listings, onLikedChange, initialLikedIds = n
   const trackSwipe = (listingId: string, direction: "left" | "right") => {
     if (!user) return;
 
+    // Check for previous swipe action from this user
+    const eventsData = localStorage.getItem("haven_listing_metric_events");
+    const events = eventsData ? JSON.parse(eventsData) : [];
+
+    // Find previous swipe/unlike actions from this user for this listing
+    const previousActions = events.filter((e: any) =>
+      e.listingId === listingId &&
+      e.userId === user.username &&
+      (e.type === 'swipeRight' || e.type === 'swipeLeft' || e.type === 'unlike')
+    );
+
     // Update aggregated metrics
     const metricsData = localStorage.getItem("haven_listing_metrics");
     const metrics = metricsData ? JSON.parse(metricsData) : {};
@@ -79,6 +90,21 @@ export default function CardStack({ listings, onLikedChange, initialLikedIds = n
       metrics[listingId] = { listingId, views: 0, swipeRights: 0, swipeLefts: 0 };
     }
 
+    // If user had a previous action, decrement that count
+    if (previousActions.length > 0) {
+      const lastAction = previousActions[previousActions.length - 1];
+      if (lastAction.type === 'swipeRight') {
+        // Previous action was a like, so decrement swipeRights
+        metrics[listingId].swipeRights = Math.max(0, metrics[listingId].swipeRights - 1);
+      } else if (lastAction.type === 'swipeLeft') {
+        // Previous action was a pass, so decrement swipeLefts
+        metrics[listingId].swipeLefts = Math.max(0, metrics[listingId].swipeLefts - 1);
+      }
+      // Note: If lastAction.type === 'unlike', we don't decrement anything
+      // because the unlike already decremented swipeRights
+    }
+
+    // Increment the new action's count
     if (direction === "right") {
       metrics[listingId].swipeRights += 1;
     } else {
@@ -88,8 +114,6 @@ export default function CardStack({ listings, onLikedChange, initialLikedIds = n
     localStorage.setItem("haven_listing_metrics", JSON.stringify(metrics));
 
     // Store timestamped event for trends
-    const eventsData = localStorage.getItem("haven_listing_metric_events");
-    const events = eventsData ? JSON.parse(eventsData) : [];
     events.push({
       listingId,
       timestamp: Date.now(),

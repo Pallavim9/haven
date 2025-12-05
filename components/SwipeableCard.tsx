@@ -39,6 +39,12 @@ export default function SwipeableCard({
   const [reviews, setReviews] = useState<Review[]>(listing.reviews || []);
   const cardContentRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
+  const [recentPriceChange, setRecentPriceChange] = useState<{
+    type: "increase" | "decrease";
+    daysAgo: number;
+    oldValue: number;
+    newValue: number;
+  } | null>(null);
 
   // Load reviews from localStorage after mount (client-side only)
   useEffect(() => {
@@ -52,6 +58,41 @@ export default function SwipeableCard({
       }
     } catch (error) {
       console.error("Error loading reviews from localStorage:", error);
+    }
+  }, [listing.id]);
+
+  // Load recent price changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const changesData = localStorage.getItem("haven_listing_changes");
+      if (changesData) {
+        const allChanges = JSON.parse(changesData);
+        const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+
+        // Find the most recent price change for this listing
+        const priceChanges = allChanges
+          .filter((change: any) =>
+            change.listingId === listing.id &&
+            change.field === "price" &&
+            change.timestamp > sevenDaysAgo
+          )
+          .sort((a: any, b: any) => b.timestamp - a.timestamp);
+
+        if (priceChanges.length > 0) {
+          const latestChange = priceChanges[0];
+          const daysAgo = Math.floor((Date.now() - latestChange.timestamp) / (24 * 60 * 60 * 1000));
+          setRecentPriceChange({
+            type: latestChange.newValue < latestChange.oldValue ? "decrease" : "increase",
+            daysAgo: daysAgo,
+            oldValue: latestChange.oldValue,
+            newValue: latestChange.newValue
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error loading price changes:", error);
     }
   }, [listing.id]);
 
@@ -371,8 +412,23 @@ export default function SwipeableCard({
                 </button>
               </div>
               <p className="text-gray-600 dark:text-gray-300 text-xs">{listing.address}</p>
-              <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-2">
-                ${listing.price.toLocaleString()}<span className="text-sm text-gray-500 dark:text-gray-400">/mo</span>
+              <div className="flex items-center gap-2 mt-2">
+                <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+                  ${listing.price.toLocaleString()}<span className="text-sm text-gray-500 dark:text-gray-400">/mo</span>
+                </div>
+                {recentPriceChange && (
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                    recentPriceChange.type === "decrease"
+                      ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                      : "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300"
+                  }`}>
+                    {recentPriceChange.type === "decrease" ? "📉 " : "📈 "}
+                    {recentPriceChange.type === "decrease" ? "-" : "+"}
+                    ${Math.abs(recentPriceChange.newValue - recentPriceChange.oldValue).toLocaleString()}
+                    {" • "}
+                    {recentPriceChange.daysAgo === 0 ? "Today" : `${recentPriceChange.daysAgo}d ago`}
+                  </span>
+                )}
               </div>
             </div>
 
