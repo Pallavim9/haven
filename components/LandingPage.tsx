@@ -20,23 +20,23 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
             <HavenLogo size="sm" showAnimation={false} />
             <div className={textStyles.headingBrandSmall}>Haven</div>
           </div>
-          <div className={layoutStyles.flexGap4}>
+          <div className="flex items-center gap-2 sm:gap-4">
             <Link
               href="#features"
-              className={buttonStyles.nav}
+              className={`${buttonStyles.nav} hidden sm:block`}
             >
               Features
             </Link>
             <Link
               href="#about"
-              className={buttonStyles.nav}
+              className={`${buttonStyles.nav} hidden sm:block`}
             >
               About
             </Link>
             <DarkModeToggle />
             <button
               onClick={onGetStarted}
-              className={buttonStyles.navBordered}
+              className={`${buttonStyles.navBordered} text-sm sm:text-base px-3 sm:px-4`}
             >
               Get Started
             </button>
@@ -46,9 +46,9 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
 
       {/* Hero Section */}
       <div className={layoutStyles.containerHero}>
-        <div className="max-w-4xl mx-auto text-center">
+        <div className="max-w-4xl mx-auto text-center px-4">
           <motion.h1
-            className="text-6xl md:text-7xl font-bold mb-6"
+            className="text-4xl sm:text-6xl md:text-7xl font-bold mb-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
