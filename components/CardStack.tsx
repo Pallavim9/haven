@@ -548,7 +548,7 @@ export default function CardStack({ listings, onLikedChange, initialLikedIds = n
       </div>
 
       {/* Action Buttons */}
-      <div className="flex flex-col md:hidden items-center gap-3 -mt-2 px-4 pb-4">
+      <div className="flex flex-col md:hidden items-center gap-3 -mt-16 px-4 pb-4 relative z-50">
         {/* Undo Button - Shows after swipe */}
         {canUndo && (
           <motion.button
